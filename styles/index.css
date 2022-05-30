@@ -1,0 +1,99 @@
+
+  /******************/
+ /* Specific stuff */
+/******************/
+
+#darkModeControl {
+	cursor: pointer;
+	user-select: none;
+}
+
+footer address {
+	margin: auto;
+	padding: 8px;
+	font-weight: 400;
+	font-style: italic;
+	letter-spacing: 0.5px;
+	text-align: center;
+	/* white-space: nowrap; */
+}
+
+.conditional-1200 {
+	display: none;
+}
+@media (min-width: 1200px) {
+	.conditional-1200 {
+		display: block;
+	}
+}
+
+.background-note {
+	font-weight: 300;
+	font-size: small;
+	opacity: 0.5;
+}
+
+
+
+.controls {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	margin: 8px 16px;
+}
+.controls > * {
+	margin: 0 8px 0 0;
+	padding: 4px 8px;
+}
+.controls > *:last-child {
+	margin: 0;
+}
+.controls-split {
+	/* display: grid; 
+	grid-template-columns: auto auto; */
+	display: flex;
+	margin-top: 8px;
+	margin-bottom: 8px;
+}
+.controls-split > * {
+	justify-content: center;
+	margin-top: 0;
+	margin-bottom: 0;
+	flex-grow: 1;
+}
+.controls-split > :last-child {
+	justify-content: flex-end;
+}
+.controls-split > :first-child {
+	justify-content: flex-start;
+}
+
+
+#game table {
+	margin: 16px;
+	box-shadow: 0 0 16px -4px rgba(0, 0, 0, 0.7);
+	border-collapse: collapse;
+}
+#game table > tbody > tr > td {
+	width: 4rem;
+	height: 4rem;
+	border: 1px black solid;
+	text-align: center;
+	font-size: 3rem;
+}
+#game table > tbody > tr > td:hover {
+	background-color: #DFEFFF;
+}
+
+#game table > tbody > tr > td.highlight {
+	background-color: gray;
+}
+#game table > tbody > tr > td.highlight:hover {
+	background-color: lightgray;
+}
+
+#game .messages {
+	font-size: smaller;
+	/* list-style: none; */
+}
+
