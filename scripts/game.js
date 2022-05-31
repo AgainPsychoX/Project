@@ -117,6 +117,38 @@ class Game extends EventTarget {
 		this.state[x + y * this.settings.width] = v;
 	}
 
+	/**
+	 * Returns iterable for pairs of coords and values.
+	 */
+	stateIterable() {
+		const that = this;
+		return {
+			[Symbol.iterator]: () => ({
+				x: 0,
+				y: 0,
+				next: function() {
+					if (this.x == that.settings.width) {
+						this.x = 0;
+						this.y += 1;
+					}
+					if (this.y < that.settings.height) {
+						this.x += 1;
+						return {
+							value: {
+								x: this.x - 1, 
+								y: this.y, 
+								c: that.get(this.x - 1, this.y),
+							},
+							// done: (this.x == that.settings.width && this.y == that.settings.width - 1),
+							done: false,
+						};
+					}
+					return { done: true };
+				},
+			})
+		};
+	}
+
 	isFree(x, y) {
 		return !this.get(x, y);
 	}
@@ -277,6 +309,48 @@ class Game extends EventTarget {
 			return;
 		}
 		this.next();
+	}
+
+	/**
+	 * Generates diagonally aligned positions from given (coords) cell.
+	 * @param {number} sx Center cell X coord.
+	 * @param {number} sy Center cell Y coord.
+	 */
+	*diagonalPositionsGenerator(sx, sy) {
+		const w = this.settings.width;
+		const h = this.settings.height;
+		for (let x = sx - 1, y = sy - 1; 0 <= x && 0 <= y; x--, y--) yield {x, y};
+		for (let x = sx - 1, y = sy + 1; 0 <= x && y < h;  x--, y++) yield {x, y};
+		for (let x = sx + 1, y = sy - 1; x < w  && 0 <= y; x++, y--) yield {x, y};
+		for (let x = sx + 1, y = sy + 1; x < w  && y < h;  x++, y++) yield {x, y};
+	}
+
+	/**
+	 * Generates orthogonally aligned positions from given (coords) cell.
+	 * @param {number} sx Center cell X coord.
+	 * @param {number} sy Center cell Y coord.
+	 */
+	*orthogonalPositionsGenerator(sx, sy) {
+		for (let x = sx - 1; 0 <= x; x--) yield {x, y: sy};
+		for (let x = this.settings.width - 1;  sx < x; x--) yield {x, y: sy};
+		for (let y = sy - 1; 0 <= y; y--) yield {x: sx, y};
+		for (let y = this.settings.height - 1;  sy < y; y--) yield {x: sx, y};
+	}
+
+	/**
+	 * Generates available positions for moving given (coords) cell.
+	 * @param {number} sx Source cell X coord.
+	 * @param {number} sy Source cell Y coord.
+	 */
+	*movePositionsGenerator(sx, sy) {
+		if (this.settings.orthogonalMoves)
+			for (const {x, y} of this.orthogonalPositionsGenerator(sx, sy))
+				if (this.isFree(x, y))
+					yield {x, y};
+		if (this.settings.diagonalMoves)
+			for (const {x, y} of this.diagonalPositionsGenerator(sx, sy))
+				if (this.isFree(x, y))
+					yield {x, y};
 	}
 
 	/**

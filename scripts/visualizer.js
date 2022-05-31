@@ -108,6 +108,7 @@ class GameVisualizer {
 	}
 
 	detach() {
+		if (!this.game) return this;
 		this.game.removeEventListener('start',   this.startListener);
 		this.game.removeEventListener('next',    this.nextListener);
 		this.game.removeEventListener('place',   this.placeListener);
@@ -211,12 +212,7 @@ class GameVisualizer {
 					}
 					event.preventDefault();
 					this.game.move(x, y, columnIndex, rowIndex, this.game.currentPlayer);
-					for (let x = 0; x < this.width; x++) {
-						for (let y = 0; y < this.height; y++) {
-							const cell = this.getCell(x, y);
-							cell.classList.toggle('target', false);
-						}
-					}
+					this.tbody.querySelectorAll('td.target').forEach(cell => cell.classList.toggle('target', false));
 				});
 				tr.appendChild(td);
 			}
