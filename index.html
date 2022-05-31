@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 	<meta charset="UTF-8">
-	<title>Projekt gry min-max z sztucznej inteligencji</title>
+	<title>Zmodyfikowana gra kółko-krzyżyk</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="styles/common.css">
 	<link rel="stylesheet" href="styles/index.css">
@@ -10,19 +10,34 @@
 <body>
 	<header>
 		<div class="nice-container">
-			<h1>Projekt gry min-max z sztucznej inteligencji</h1>
+			<h1>Zmodyfikowana gra kółko-krzyżyk</h1>
 		</div>
 	</header>
 	<main>
 		<article class="nice-container">
+			<section id="rules">
+				<h2>Zasady</h2>
+				<ul>
+					<li>Gracze naprzemiennie wykonują swoje ruchy (tak jak w grze kółko-krzyżyk), ale na planszy umieszczają tylko po 3 znaki.</li>
+					<li>Następnie, w ostatnim ruchu każdy z graczy musi przesunąć swój znak na wolne pole. Ten ruch może się odbyć tylko w pionie lub poziomie.</li>
+					<li>Wygrywa ten, kto umieści swoje 3 znaki w jednej linii (jak w grze w kółko-krzyżyk).</li>
+				</ul>
+			</section>
 			<section id="game">
 				<h2>Gra</h2>
-				<table>
-					<tbody>
-					</tbody>
-				</table>
-				<ul class="messages">
-				</ul>
+				<div class="controls">
+					<button name="reset">Reset</button>
+				</div>
+				<figure>
+					<table>
+						<tbody>
+						</tbody>
+					</table>
+				</figure>
+				<aside class="right">
+					<ul class="messages">
+					</ul>
+				</aside>
 			</section>
 		</article>
 	</main>

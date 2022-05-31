@@ -70,26 +70,49 @@ footer address {
 
 
 #game table {
-	margin: 16px;
+	min-width: auto;
 	box-shadow: 0 0 16px -4px rgba(0, 0, 0, 0.7);
 	border-collapse: collapse;
+	font-size: 4;
 }
 #game table > tbody > tr > td {
 	width: 4rem;
 	height: 4rem;
 	border: 1px black solid;
 	text-align: center;
-	font-size: 3rem;
+	font-size: 2.5rem;
+	font-family: Gill Sans, Gill Sans MT, Calibri, sans-serif;
 }
 #game table > tbody > tr > td:hover {
-	background-color: #DFEFFF;
+	background: #DFEFFF;
+}
+
+/* #game table > tbody > tr > td.filled {
+	cursor: default;
+} */
+#game table > tbody > tr > td.filled:hover {
+	background: white;
 }
 
 #game table > tbody > tr > td.highlight {
-	background-color: gray;
+	background: lightgray;
 }
 #game table > tbody > tr > td.highlight:hover {
-	background-color: lightgray;
+	background: gray;
+}
+
+#game table.placing > tbody > tr > td {
+	cursor: pointer;
+}
+#game table.placing > tbody > tr > td.filled {
+	cursor: default;
+}
+
+#game table.moving > tbody > tr > td.owned {
+	cursor: grab;
+}
+#game table.moving > tbody > tr > td.target {
+	background: lightgray;
 }
 
 #game .messages {
