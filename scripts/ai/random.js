@@ -3,28 +3,22 @@ async function delay(milliseconds) {
 	return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
-class RandomGameStrategy extends GameStrategy {
+class RandomStrategy extends GameStrategy {
 	constructor() {
 		super();
 	}
 
-	getPlacePossibilities() {
-		return [...this.game.stateIterable()].filter(e => !e.c);
-	}
-
-	getMovePossibilities() {
-		return [...this.game.stateIterable()].filter(e => e.c == this.symbolCode).flatMap(e => {
-			return [...this.game.movePositionsGenerator(e.x, e.y)].map(p => ({sx: e.x, sy: e.y, tx: p.x, ty: p.y}));
-		});
+	get symbol() {
+		return symbolsForPlayers[this.player];
 	}
 
 	getRandomPlacePossibility() {
-		const possibilities = this.getPlacePossibilities();
+		const possibilities = [...this.game.placePossibilitiesGenerator()];
 		return possibilities[Math.floor(Math.random() * possibilities.length)]
 	}
 
 	getRandomMovePossibility() {
-		const possibilities = this.getMovePossibilities();
+		const possibilities = [...this.game.movePossibilitiesForSymbolGenerator(this.symbol)];
 		return possibilities[Math.floor(Math.random() * possibilities.length)]
 	}
 
@@ -55,7 +49,6 @@ class RandomGameStrategy extends GameStrategy {
 	 */
 	attach(game, player = 1) {
 		super.attach(game, player);
-		this.symbolCode = symbolsForPlayers[player].charCodeAt(0);
 		this.game.addEventListener('start', this.startListener = event => {
 			if (this.player == event.player) {
 				this.next();

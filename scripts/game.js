@@ -101,13 +101,23 @@ class Game extends EventTarget {
 		this.reset();
 	}
 
+	clone() {
+		const instance = new Game(this.settings);
+		instance.currentPlayer = this.currentPlayer;
+		instance.state = [...this.state];
+		instance.phase = this.phase;
+		instance.remainingPlaces = this.remainingPlaces;
+		instance.remainingMoves = this.remainingMoves;
+		return instance;
+	}
+
 	reset() {
 		this.currentPlayer = 0;
 		this.state = Array(this.settings.width * this.settings.height).fill(0);
-		this.remainingPlaces = Array(this.settings.playersCount).fill(this.settings.placesPerPlayer);
-		this.remainingMoves = Array(this.settings.playersCount).fill(this.settings.movesPerPlayer);
 		/** @type {GamePhase} */
 		this.phase = 'placing';
+		this.remainingPlaces = Array(this.settings.playersCount).fill(this.settings.placesPerPlayer);
+		this.remainingMoves = Array(this.settings.playersCount).fill(this.settings.movesPerPlayer);
 	}
 
 	get(x, y) {
@@ -253,6 +263,15 @@ class Game extends EventTarget {
 	}
 
 	/**
+	 * Generates possible place positions (free cells).
+	 */
+	*placePossibilitiesGenerator() {
+		for (const {x, y, c} of this.stateIterable())
+			if (!c)
+				yield {x, y};
+	}
+
+	/**
 	 * Moves symbol from under given coords to other given coords by selected player.
 	 * @param {number} sx 
 	 * @param {number} sy 
@@ -351,6 +370,19 @@ class Game extends EventTarget {
 			for (const {x, y} of this.diagonalPositionsGenerator(sx, sy))
 				if (this.isFree(x, y))
 					yield {x, y};
+	}
+
+	*movePossibilitiesForSymbolGenerator(symbol) {
+		const code = symbol.charCodeAt(0);
+		for (const {x, y, c} of this.stateIterable()) {
+			if (c == code) {
+				const sx = x;
+				const sy = y;
+				for (const {x, y} of this.movePositionsGenerator(sx, sy)) {
+					yield {sx, sy, tx: x, ty: y};
+				}
+			}
+		}
 	}
 
 	/**
