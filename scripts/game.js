@@ -47,6 +47,9 @@ class DrawEvent extends GameOverEvent {
 }
 
 /**
+ * @typedef {'place'|'move'} GameAction
+ */
+/**
  * @typedef {'placing'|'moving'|'over'} GamePhase
  */
 
@@ -101,13 +104,25 @@ class Game extends EventTarget {
 		this.reset();
 	}
 
+	toString() {
+		let str = `players: ${this.playersCount}, places: ${this.settings.placesPerPlayer}, moves: ${this.settings.movesPerPlayer}\n`;
+		for (let y = 0; y < this.settings.height; y++) {
+			for (let x = 0; x < this.settings.width; x++) {
+				str += (this.getSymbol(x, y) ?? '.') + ' ';
+			}
+			str += '\n';
+		}
+		str += `currentPlayer: ${this.currentPlayer} (${this.currentPlayerSymbol})\n`;
+		return str;
+	}
+
 	clone() {
 		const instance = new Game(this.settings);
 		instance.currentPlayer = this.currentPlayer;
 		instance.state = [...this.state];
 		instance.phase = this.phase;
-		instance.remainingPlaces = this.remainingPlaces;
-		instance.remainingMoves = this.remainingMoves;
+		instance.remainingPlaces = [...this.remainingPlaces];
+		instance.remainingMoves = [...this.remainingMoves];
 		return instance;
 	}
 
@@ -175,8 +190,24 @@ class Game extends EventTarget {
 		this.set(x, y, symbol.charCodeAt(0));
 	}
 
+	get currentPlayerSymbol() {
+		return symbolsForPlayers[this.currentPlayer];
+	}
+
 	isOver() {
 		return this.phase == 'over';
+	}
+
+	victory(player) {
+		this.currentPlayer = player;
+		this.dispatchEvent(new PhaseEvent(this.phase = 'over'));
+		this.dispatchEvent(new GameOverEvent(this.currentPlayer));
+	}
+
+	draw() {
+		this.currentPlayer = -1;
+		this.dispatchEvent(new PhaseEvent(this.phase = 'over'));
+		this.dispatchEvent(new DrawEvent());
 	}
 
 	/**
@@ -189,8 +220,7 @@ class Game extends EventTarget {
 			this.dispatchEvent(new PhaseEvent(this.phase = 'moving'));
 		}
 		if (this.phase == 'moving' && this.remainingMoves[this.currentPlayer] == 0) {
-			this.dispatchEvent(new PhaseEvent(this.phase = 'over'));
-			this.dispatchEvent(new DrawEvent());
+			this.draw();
 			return;
 		}
 
@@ -222,16 +252,23 @@ class Game extends EventTarget {
 		const streak = this.checkForStreak(x, y);
 		if (streak) {
 			this.dispatchEvent(new StreakEvent(streak.highlight, streak.symbol, this.currentPlayer));
-			this.dispatchEvent(new PhaseEvent(this.phase = 'over'));
-			this.dispatchEvent(new GameOverEvent(this.currentPlayer));
+			this.victory(this.currentPlayer);
 			return;
 		}
 		if (!this.isAnyFree()) {
-			this.dispatchEvent(new PhaseEvent(this.phase = 'over'));
-			this.dispatchEvent(new DrawEvent());
+			this.draw();
 			return;
 		}
 		this.next();
+	}
+	
+	/**
+	 * Generates possible place positions (free cells).
+	 */
+	*placePossibilitiesGenerator() {
+		for (const {x, y, c} of this.stateIterable())
+			if (!c)
+				yield {x, y};
 	}
 
 	/**
@@ -260,15 +297,6 @@ class Game extends EventTarget {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Generates possible place positions (free cells).
-	 */
-	*placePossibilitiesGenerator() {
-		for (const {x, y, c} of this.stateIterable())
-			if (!c)
-				yield {x, y};
 	}
 
 	/**
@@ -323,8 +351,7 @@ class Game extends EventTarget {
 		const streak = this.checkForStreak(tx, ty);
 		if (streak) {
 			this.dispatchEvent(new StreakEvent(streak.highlight, streak.symbol, this.currentPlayer));
-			this.dispatchEvent(new PhaseEvent(this.phase = 'over'));
-			this.dispatchEvent(new GameOverEvent(this.currentPlayer));
+			this.victory(this.currentPlayer);
 			return;
 		}
 		this.next();
@@ -372,6 +399,9 @@ class Game extends EventTarget {
 					yield {x, y};
 	}
 
+	/**
+	 * Generates possible moves of given symbol.
+	 */
 	*movePossibilitiesForSymbolGenerator(symbol) {
 		const code = symbol.charCodeAt(0);
 		for (const {x, y, c} of this.stateIterable()) {
@@ -501,5 +531,7 @@ class Game extends EventTarget {
 		this.currentPlayer = player;
 		this.dispatchEvent(new PlayerEvent('start', player));
 		this.dispatchEvent(new PhaseEvent(this.phase));
+		this.currentPlayer = player - 1;
+		this.next();
 	}
 }

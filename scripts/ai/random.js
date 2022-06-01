@@ -49,11 +49,6 @@ class RandomStrategy extends GameStrategy {
 	 */
 	attach(game, player = 1) {
 		super.attach(game, player);
-		this.game.addEventListener('start', this.startListener = event => {
-			if (this.player == event.player) {
-				this.next();
-			}
-		});
 		this.game.addEventListener('next', this.nextListener = event => {
 			if (this.player == event.player) {
 				this.next();
@@ -64,7 +59,6 @@ class RandomStrategy extends GameStrategy {
 
 	detach() {
 		if (!this.game) return this;
-		this.game.removeEventListener('start', this.startListener);
 		this.game.removeEventListener('next',  this.nextListener);
 		super.detach();
 		return this;

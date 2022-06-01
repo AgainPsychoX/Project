@@ -173,7 +173,11 @@ class GameVisualizer {
 			const tr = document.createElement('tr');
 			for (const columnIndex of Array(this.width).keys()) {
 				const td = document.createElement('td');
-				td.innerText = this.game.getSymbol(columnIndex, rowIndex) || '';
+				const symbol = this.game.getSymbol(columnIndex, rowIndex);
+				if (symbol) {
+					td.innerText = symbol;
+					td.classList.toggle('filled', true);
+				}
 				td.addEventListener('dragstart', event => {
 					const symbol = this.game.getSymbol(columnIndex, rowIndex);
 					if (!symbol || symbol != symbolsForPlayers[this.game.currentPlayer]) {
