@@ -109,6 +109,8 @@ class GameVisualizer {
 
 	detach() {
 		if (!this.game) return this;
+		this.disableMoving();
+		this.disablePlacing();
 		this.game.removeEventListener('start',   this.startListener);
 		this.game.removeEventListener('next',    this.nextListener);
 		this.game.removeEventListener('place',   this.placeListener);
