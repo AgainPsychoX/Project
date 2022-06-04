@@ -18,21 +18,6 @@ footer address {
 	/* white-space: nowrap; */
 }
 
-.conditional-1200 {
-	display: none;
-}
-@media (min-width: 1200px) {
-	.conditional-1200 {
-		display: block;
-	}
-}
-
-.background-note {
-	font-weight: 300;
-	font-size: small;
-	opacity: 0.5;
-}
-
 
 
 .controls {
@@ -48,26 +33,49 @@ footer address {
 .controls > *:last-child {
 	margin: 0;
 }
-.controls-split {
-	/* display: grid; 
-	grid-template-columns: auto auto; */
-	display: flex;
-	margin-top: 8px;
-	margin-bottom: 8px;
-}
-.controls-split > * {
-	justify-content: center;
-	margin-top: 0;
-	margin-bottom: 0;
-	flex-grow: 1;
-}
-.controls-split > :last-child {
-	justify-content: flex-end;
-}
-.controls-split > :first-child {
-	justify-content: flex-start;
-}
 
+
+
+#game {
+	display: grid;
+	grid-template-areas: 
+		'h'
+		'c'
+		'a'
+		'm'
+	;
+}
+@media (min-width: calc(960px - 32px)) {
+	#game {
+		grid-template-columns: 0.6fr 0.4fr;
+		grid-template-areas: 
+			'h h'
+			/* 'h m' */
+			'c m'
+			'a m'
+			'. m'
+		;
+	}
+}
+#game > h2 {
+	grid-area: h;
+}
+#game > .controls {
+	grid-area: c;
+	flex-direction: column;
+}
+#game > .controls > label > span:first-of-type {
+	display: inline-block;
+	min-width: 200px;
+	text-align: end;
+	padding-right: 4px;
+}
+#game > figure {
+	grid-area: a;
+}
+#game > aside {
+	grid-area: m;
+}
 
 #game table {
 	min-width: auto;

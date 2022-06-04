@@ -20,17 +20,18 @@ async function nextFrame() {
 
 class MinMaxNode {
 	/**
+	 * @param {number} player Player to win.
 	 * @param {Game} game 
 	 * @param {GameAction} action 
 	 * @param  {...any} args 
 	 */
-	constructor(game, action, ...args) {
+	constructor(player, game, action, ...args) {
+		/** @type {number} */ this.player = player;
 		/** @type {Game} */ this.game = game;
-		/** @type {number} */ this.player = game.currentPlayer;
 		/** @type {GameAction} */ this.action = action
 		/** @type {any[]} */ this.args = args;
 		/** @type {MinMaxNode[]} */ this.children = [];
-		/** @type {number} */ this.winner = -1;
+		/** @type {number} */ this.score = -Infinity;
 
 		this.applyTo(this.game);
 	}
@@ -54,37 +55,37 @@ class MinMaxNode {
 		}
 	}
 
-	scoreFor(player) {
-		if (this.winner === player) return 1;
-		if (this.winner === -1) return  0;
-		return -1;
-	}
-
 	async prepare() {
+		await MinMaxStrategy._keepInteractivePromise(); // prevent page responding
+		const aggregate = this.player == this.game.currentPlayer ? Math.max : Math.min;
 		switch (this.game.phase) {
 			case 'placing': 
 				for (const {x, y} of this.game.placePossibilitiesGenerator()) {
-					const child = new MinMaxNode(this.game.clone(), 'place', x, y);
+					const child = new MinMaxNode(this.player, this.game.clone(), 'place', x, y);
 					await child.prepare();
 					this.children.push(child);
 				}
+				this.score = aggregate.apply(null, this.children.map(c => c.score));
 				break;
 			case 'moving': 
 				for (const {sx, sy, tx, ty} of this.game.movePossibilitiesForSymbolGenerator(this.game.currentPlayerSymbol)) {
-					const child = new MinMaxNode(this.game.clone(), 'move', sx, sy, tx, ty);
+					const child = new MinMaxNode(this.player, this.game.clone(), 'move', sx, sy, tx, ty);
 					await child.prepare();
 					this.children.push(child);
 				}
+				this.score = aggregate.apply(null, this.children.map(c => c.score));
 				break;
 			case 'over':
-				this.winner = this.game.currentPlayer;
+				if (this.game.currentPlayer == this.player) {
+					this.score = 1;
+					break;
+				}
+				if (this.game.currentPlayer == -1) {
+					this.score = 0;
+					break;
+				}
+				this.score = -1;
 				break;
-		}
-		for (const node of this.children) {
-			if (node.winner == this.game.currentPlayer) {
-				this.winner = this.game.currentPlayer;
-				break;
-			}
 		}
 		this.game = null;
 	}
@@ -102,18 +103,27 @@ class MinMaxStrategy extends GameStrategy {
 	static _cachedRoots = {};
 
 	/**
+	 * @param {number} player Player to win.
 	 * @param {Game} game 
 	 */
-	static async prepareRoot(game) {
-		const hash = await sha1('XD' + game.currentPlayer + JSON.stringify(game.settings) + game.state);
+	static async prepareRoot(player, game) {
+		const hash = await sha1('XD' + game.currentPlayer + player + JSON.stringify(game.settings) + game.state);
 
 		const found = MinMaxStrategy._cachedRoots[hash];
 		if (found) return found;
 
-		const fresh = new MinMaxNode(game.clone());
+		const fresh = new MinMaxNode(player, game.clone());
 		await fresh.prepare();
 		MinMaxStrategy._cachedRoots[hash] = fresh;
 		return fresh;
+	}
+
+	static _keepInteractiveCounter = 0;
+	static async _keepInteractivePromise() {
+		if (++MinMaxStrategy._keepInteractiveCounter % 10000 == 0) {
+			console.log(`Building min-max tree: ${MinMaxStrategy._keepInteractiveCounter} nodes...`);
+			return nextFrame();
+		}
 	}
 
 	constructor() {
@@ -133,17 +143,15 @@ class MinMaxStrategy extends GameStrategy {
 	debugPrintPossibilities() {
 		console.log(
 			this.possibilities
-				.map(p => [p, p.scoreFor(this.player)])
-				.sort((a, b) => a[1] - b[1])
-				.map(p => `${p[0].action} ${p[0].args.join(' ')} -> score: ${p[1]}, winner: ${p[0].winner} [children: ${p[0].children.length}]`)
+				.sort((a, b) => a.score - b.score)
+				.map(p => `${p.action} ${p.args.join(' ')} -> score: ${p.score} [children: ${p.children.length}]`)
 				.join('\n')
 		);
 	}
 
 	getBestPossibility() {
-		const withScores = this.possibilities.map(p => [p, p.scoreFor(this.player)]);
-		const bestScore = Math.max(...withScores.map(p => p[1]));
-		const bestPossibilities = withScores.filter(p => p[1] == bestScore).map(p => p[0]);
+		const bestScore = Math.max(...this.possibilities.map(p => p.score));
+		const bestPossibilities = this.possibilities.filter(p => p.score == bestScore).map(p => p);
 		return bestPossibilities[Math.random() * bestPossibilities.length | 0];
 	}
 
@@ -151,12 +159,12 @@ class MinMaxStrategy extends GameStrategy {
 		// Minimal delay is required to observe game in first phase (as 'start' event is fired before 'phase')
 		await nextFrame();
 
-		const root = await MinMaxStrategy.prepareRoot(this.game);
+		const root = await MinMaxStrategy.prepareRoot(this.player, this.game);
 		this.possibilities = root.children;
 
 		if (this.game.currentPlayer != this.player) {
 			console.log('nodes: ' + this.countNodes());
-			console.log(`Min-max possibilities for player ${this.game.currentPlayer}:`);
+			console.log(`Min-max possibilities:`);
 			this.debugPrintPossibilities();
 		}
 	}
@@ -167,9 +175,9 @@ class MinMaxStrategy extends GameStrategy {
 	async next() {
 		// Wait for ready
 		await this.readyPromise;
-		console.log('nodes: ' + this.countNodes());
 
-		console.log(`Min-max possibilities for player ${this.player}:`);
+		console.log('nodes: ' + this.countNodes());
+		console.log(`Min-max possibilities:`);
 		this.debugPrintPossibilities();
 
 		const best = this.getBestPossibility();
@@ -177,8 +185,7 @@ class MinMaxStrategy extends GameStrategy {
 		this.possibilities = best.children;
 
 		console.log('nodes: ' + this.countNodes());
-
-		console.log(`Min-max possibilities for player ${this.game.currentPlayer}:`);
+		console.log(`Min-max possibilities:`);
 		this.debugPrintPossibilities();
 	}
 

@@ -1,31 +1,87 @@
 
+const gameUiRoot = document.querySelector('#game');
+
 let game = new Game();
-// {
-// 	const x = 'X'.charCodeAt(0);
-// 	const o = 'O'.charCodeAt(0);
-// 	game.state = [
-// 		x, x, 0, 
-// 		o, o, 0,
-// 		0, 0, 0,
-// 	];
-// 	game.remainingPlaces[1] = game.remainingPlaces[0] = 1;
-// }
-const visualizer = new GameVisualizer(document.querySelector('#game')).attach(game);
-// let strategy = new RandomStrategy().attach(game);
-let strategy = new MinMaxStrategy().attach(game);
 
-document.querySelector('#game .controls button[name=reset]').addEventListener('click', () => {
+const visualizer = new GameVisualizer(gameUiRoot).attach(game);
+
+const strategies = {
+	none: null,
+	random: new RandomStrategy(),
+	minMax: new MinMaxStrategy(),
+};
+let strategy;
+let startingPlayer = 0;
+
+function reset() {
+	// Detach anything from the game instance
+	if (strategy) {
+		strategy.detach();
+	}
 	visualizer.detach();
-	strategy.detach();
+
+	// Algorithm for computer to use
+	{
+		strategy = strategies[gameUiRoot.querySelector('.controls select[name=computerAlgorithm]').value];
+		if (strategy === undefined) {
+			throw new Error(`Strategy not found by name`);
+		}
+	}
+
+	// Starting player
+	{
+		const value = gameUiRoot.querySelector('.controls select[name=startingPlayer]').value;
+		const num = parseInt(value);
+		if (isNaN(num)) {
+			switch (value) {
+				case 'random':
+					startingPlayer = -1;
+					break;
+				case 'alternately': 
+					startingPlayer = (startingPlayer + 1) % game.settings.playersCount;
+					break;
+				case 'loser':  {
+					if (game.currentPlayer >= 0)
+						startingPlayer = (game.currentPlayer + 1) % game.settings.playersCount;
+					else
+						startingPlayer = -1;
+					break;
+				}
+				case 'winner': {
+					if (game.currentPlayer >= 0)
+						startingPlayer = game.currentPlayer;
+					else
+						startingPlayer = -1;
+					break;
+				}
+			}
+			if (startingPlayer == -1) {
+				startingPlayer = Math.floor(Math.random() * game.settings.playersCount);
+			}
+		}
+		else {
+			startingPlayer = num;
+		}
+	}
+	
+
+	// Reset the game state
 	game.reset();
+
+	// Attach visualizer
 	visualizer.attach(game);
-	strategy.attach(game);
-	game.start(Math.floor(Math.random() * 2));
-});
 
+	// Attach strategy, if any
+	if (strategy) {
+		strategy.attach(game);
+	}
 
+	// Start the game
+	game.start(startingPlayer);
+}
+gameUiRoot.querySelector('.controls button[name=reset]').addEventListener('click', reset);
 
-// game.start(Math.floor(Math.random() * 2));
-game.start(1);
+gameUiRoot.querySelector('.controls select[name=computerAlgorithm]').value = 'random';
+reset();
 
 

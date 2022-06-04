@@ -26,7 +26,53 @@
 			<section id="game">
 				<h2>Gra</h2>
 				<div class="controls">
-					<button name="reset">Reset</button>
+					<div class="buttons controls">
+						<button name="reset">Reset</button>
+					</div>
+					<label>
+						<span>Zaczyna gracz:</span>
+						<select name="startingPlayer">
+							<option value="random" selected>Losowy</option>
+							<option value="alternately">Na przemian</option>
+							<option value="0">Człowiek</option>
+							<option value="1">Komputer</option>
+							<option value="loser">Przegrywający</option>
+							<option value="winner">Wygrywający</option>
+						</select>
+					</label>
+					<label>
+						<span>Strategia dla komputera:</span>
+						<select name="computerAlgorithm">
+							<option value="none">Brak (hot-seat)</option>
+							<option value="random">Losowa</option>
+							<!-- <option value="naive">Naiwna</option> -->
+							<option value="minMax" selected>Min-max</option>
+							<!-- <option value="alphaBeta" selected>Alpha-Beta</option> -->
+							<!-- <option value="simpleHeuristic">Prosta heurystyczna</option> -->
+						</select>
+					</label>
+					<!-- <label>
+						<span>Szansa na losowy ruch komputera (im większa tym łatwiej):</span>
+						<input 
+							name="computerRandomChance" type="number" 
+							step="5" min="0" max="100" value="0"
+							style="width: 54px;" 
+						/>
+						<span>%</span>
+					</label> -->
+					<!-- <label>
+						<input name="showComputerChoices" type="checkbox">
+						<span>Pokaż wybory komputera</span>
+					</label> -->
+					<!-- <label>
+						<span>Opóźnienie minimalne dla komputera:</span>
+						<input 
+							name="delay" type="number" 
+							step="50" min="0" max="9950" value="0"
+							style="width: 54px;" 
+						/>
+						<span>(ms)</span>
+					</label> -->
 				</div>
 				<figure>
 					<table>
@@ -34,7 +80,8 @@
 						</tbody>
 					</table>
 				</figure>
-				<aside class="right">
+				<aside>
+					<h4>Historia gry</h4>
 					<ul class="messages">
 					</ul>
 				</aside>

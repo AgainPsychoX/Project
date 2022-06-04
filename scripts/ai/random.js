@@ -2,6 +2,9 @@
 async function delay(milliseconds) {
 	return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
+async function nextFrame() {
+	return new Promise(resolve => requestAnimationFrame(resolve));
+}
 
 class RandomStrategy extends GameStrategy {
 	constructor() {
@@ -26,8 +29,8 @@ class RandomStrategy extends GameStrategy {
 	 * Performs next action.
 	 */
 	async next() {
-		// Minimal delay is required
-		await delay(333);
+		// Minimal delay is required to observe game in right state
+		await nextFrame();
 
 		switch (this.game.phase) {
 			case 'placing': {
