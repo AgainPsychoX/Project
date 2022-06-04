@@ -13,12 +13,18 @@ const strategies = {
 let strategy;
 let startingPlayer = 0;
 
-function reset() {
+const resetButton = gameUiRoot.querySelector('.controls button[name=reset]');
+async function reset() {
+	resetButton.disabled = true;
+
 	// Detach anything from the game instance
 	if (strategy) {
 		strategy.detach();
 	}
 	visualizer.detach();
+
+	// Reset the game state
+	game.reset();
 
 	// Algorithm for computer to use
 	{
@@ -63,25 +69,25 @@ function reset() {
 			startingPlayer = num;
 		}
 	}
-	
-
-	// Reset the game state
-	game.reset();
+	game.settings.startingPlayer = startingPlayer;
 
 	// Attach visualizer
 	visualizer.attach(game);
 
 	// Attach strategy, if any
 	if (strategy) {
-		strategy.attach(game);
+		strategy.attach(game, 1, visualizer);
+		await strategy.prepare();
 	}
 
 	// Start the game
-	game.start(startingPlayer);
-}
-gameUiRoot.querySelector('.controls button[name=reset]').addEventListener('click', reset);
+	game.start();
 
-gameUiRoot.querySelector('.controls select[name=computerAlgorithm]').value = 'random';
+	resetButton.disabled = false;
+}
+resetButton.addEventListener('click', reset);
+
+// gameUiRoot.querySelector('.controls select[name=computerAlgorithm]').value = 'random'; // prevent lag while in development
 reset();
 
 

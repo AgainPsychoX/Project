@@ -71,19 +71,8 @@ class GameVisualizer {
 		);
 		this.game.addEventListener('phase', 
 			this.phaseListener = /** @param {PhaseEvent} event */ event => {
-				switch (event.phase) {
-					case 'placing':
-						this.disableMoving();
-						this.enablePlacing();
-						break;
-					case 'moving':
-						this.disablePlacing();
-						this.enableMoving();
-						break;
-					case 'over':
-						this.disableMoving();
-						this.disablePlacing();
-						break;
+				if (!this.isLocked()) {
+					this.unlock();
 				}
 				this.logMessage(`Faza gry: ${phaseToDisplayName[event.phase]}`);
 			}
@@ -105,6 +94,7 @@ class GameVisualizer {
 		const li = document.createElement('li');
 		li.innerHTML = content;
 		this.uiRoot.querySelector('.messages').appendChild(li);
+		return li;
 	}
 
 	detach() {
@@ -135,16 +125,19 @@ class GameVisualizer {
 	}
 
 	enablePlacing() {
-		this.uiRoot.querySelector('table').classList.toggle('placing', true);
-		this.tbody.addEventListener('click', this.clickListener = event => {
-			const [columnIndex, rowIndex] = this.eventToCoords(event);
-			if (this.game.isOver()) return;
-			if (!this.game.isFree(columnIndex, rowIndex)) {
-				// alert('To miejsce jest już zajęte!');
-				return;
+		if (!this.clickListener) {
+			this.clickListener = (event) => {
+				const [columnIndex, rowIndex] = this.eventToCoords(event);
+				if (this.game.isOver()) return;
+				if (!this.game.isFree(columnIndex, rowIndex)) {
+					// alert('To miejsce jest już zajęte!');
+					return;
+				}
+				this.game.place(columnIndex, rowIndex, this.game.currentPlayer);
 			}
-			this.game.place(columnIndex, rowIndex, this.game.currentPlayer);
-		});
+		}
+		this.uiRoot.querySelector('table').classList.toggle('placing', true);
+		this.tbody.addEventListener('click', this.clickListener);
 	}
 	disablePlacing() {
 		this.uiRoot.querySelector('table').classList.toggle('placing', false);
@@ -167,6 +160,34 @@ class GameVisualizer {
 				const cell = this.getCell(x, y);
 				cell.draggable = false;
 			}
+		}
+	}
+
+	isLocked() {
+		return this.uiRoot.querySelector('table').classList.contains('locked');
+	}
+
+	lock() {
+		this.uiRoot.querySelector('table').classList.toggle('locked', true);
+		this.disablePlacing();
+		this.disableMoving();
+	}
+
+	unlock() {
+		this.uiRoot.querySelector('table').classList.toggle('locked', false);
+		switch (this.game.phase) {
+			case 'placing':
+				this.disableMoving();
+				this.enablePlacing();
+				break;
+			case 'moving':
+				this.disablePlacing();
+				this.enableMoving();
+				break;
+			case 'over':
+				this.disableMoving();
+				this.disablePlacing();
+				break;
 		}
 	}
 
@@ -225,6 +246,7 @@ class GameVisualizer {
 			return tr;
 		});
 		this.uiRoot.querySelector('table > tbody').replaceChildren(...rows);
+		this.uiRoot.querySelector('.strategy').replaceChildren();
 	}
 
 	getCell(x, y) {

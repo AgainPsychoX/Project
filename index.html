@@ -22,6 +22,10 @@
 					<li>Następnie, w ostatnim ruchu każdy z graczy musi przesunąć swój znak na wolne pole. Ten ruch może się odbyć tylko w pionie lub poziomie.</li>
 					<li>Wygrywa ten, kto umieści swoje 3 znaki w jednej linii (jak w grze w kółko-krzyżyk).</li>
 				</ul>
+				<h3>Uwagi</h3>
+				<ul>
+					<li>Generowanie drzewa dla strategii min-max może jednorazowo nieco trwać (dla każdej z zaczynającej stron).</li>
+				</ul>
 			</section>
 			<section id="game">
 				<h2>Gra</h2>
@@ -32,8 +36,8 @@
 					<label>
 						<span>Zaczyna gracz:</span>
 						<select name="startingPlayer">
-							<option value="random" selected>Losowy</option>
-							<option value="alternately">Na przemian</option>
+							<option value="random">Losowy</option>
+							<option value="alternately" selected>Na przemian</option>
 							<option value="0">Człowiek</option>
 							<option value="1">Komputer</option>
 							<option value="loser">Przegrywający</option>
@@ -80,18 +84,20 @@
 						</tbody>
 					</table>
 				</figure>
-				<aside>
+				<div class="right">
 					<h4>Historia gry</h4>
 					<ul class="messages">
 					</ul>
-				</aside>
+				</div>
+				<div class="strategy">
+				</div>
 			</section>
 		</article>
 	</main>
 	<footer>
 		<div class="nice-container" style="display: flex;">
 			<address>
-				Przygotowane przez <a href="mailto:patryk.ludwikowski.7@gmail.com">Patryka Ludwikowskiego</a> w ramach ćwiczeń z Sztucznej Inteligencji, Uniwersytet Rzeszowski 2022.
+				Przygotowane przez <a href="mailto:patryk.ludwikowski.7@gmail.com">Patryka Ludwikowskiego</a> <wbr/>w ramach ćwiczeń <wbr/>z Sztucznej Inteligencji, <wbr/>Uniwersytet Rzeszowski 2022.
 			</address>
 			<div style="float: right; font-size: 3em; padding: 8px;" id="darkModeControl">💡</div>
 		</div>

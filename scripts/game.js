@@ -75,6 +75,7 @@ const symbolsForPlayers = [...Array(26).keys()].map(i => symbolForPlayer(i));
  * @typedef GameSettings
  * @property {number} [width]
  * @property {number} [height]
+ * @property {number} [startingPlayer]
  * @property {number} [playersCount]
  * @property {number} [placesPerPlayer]
  * @property {number} [movesPerPlayer]
@@ -87,6 +88,7 @@ class Game extends EventTarget {
 	static DEFAULT_SETTINGS = {
 		width: 3,
 		height: 3,
+		startingPlayer: 0,
 		playersCount: 2,
 		placesPerPlayer: 3,
 		movesPerPlayer: 1,
@@ -118,6 +120,7 @@ class Game extends EventTarget {
 
 	clone() {
 		const instance = new Game(this.settings);
+		instance.turn = this.turn;
 		instance.currentPlayer = this.currentPlayer;
 		instance.state = [...this.state];
 		instance.phase = this.phase;
@@ -127,6 +130,7 @@ class Game extends EventTarget {
 	}
 
 	reset() {
+		this.turn = -1;
 		this.currentPlayer = 0;
 		this.state = Array(this.settings.width * this.settings.height).fill(0);
 		/** @type {GamePhase} */
@@ -214,6 +218,7 @@ class Game extends EventTarget {
 	 * Prepares for next turn.
 	 */
 	next() {
+		this.turn += 1;
 		this.currentPlayer = (this.currentPlayer + 1) % this.settings.playersCount;
 
 		if (this.phase == 'placing' && this.remainingPlaces[this.currentPlayer] == 0) {
@@ -518,20 +523,15 @@ class Game extends EventTarget {
 		return null;
 	}
 
-	/**
-	 * @param {number} player Player which should start the game.
-	 */
-	start(player) {
-		if (!(0 <= player && player < this.settings.playersCount)) {
-			throw new Error(`Invalid player`);
-		}
+	start() {
 		if (this.isOver()) {
 			throw new Error(`Game over, use reset first`);
 		}
-		this.currentPlayer = player;
-		this.dispatchEvent(new PlayerEvent('start', player));
+		this.currentPlayer = this.settings.startingPlayer;
+		this.dispatchEvent(new PlayerEvent('start', this.currentPlayer));
 		this.dispatchEvent(new PhaseEvent(this.phase));
-		this.currentPlayer = player - 1;
+		this.currentPlayer -= 1; // increments in `next`
 		this.next();
+		return this; // for chaining
 	}
 }

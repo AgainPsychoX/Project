@@ -18,12 +18,13 @@ Przygotował Patryk Ludwikowski.
 _Różne ciekawe luźne pomysły, które można byłoby zaimplementować dla praktyki, ale są generalnie poza założeniami projektu..._
 
 + Sztuczna inteligencja:
-	+ Proste `min-max`.
-	+ Przeglądanie grafu dla `min-max`.
-	+ Heurystyczna.
-	+ Przeglądanie grafu dla heurystyki.
-	+ Ustawienia dla heurystyki.
-+ Kontrolki pozwalające modyfikować proste ustawienia:
+	+ Przycinanie `alpha-beta`.
+	+ Transpozycje/haszowanie (Zobrist?) w celu unikania powtórzeń.
+	+ Dynamiczne transpozycje (dla symetrycznych/obróconych stanów).
+	+ Heurystyka zamiast rozwijania pełnego grafu.
+	+ Ustawienia:
+		+ szansa na losowy ruch komputera (ułatwienie).
++ Kontrolki pozwalające modyfikować ustawienia:
 	+ wymiary planszy,
 	+ liczba ustawień znaków, 
 	+ liczba przesunięć znaków,
@@ -31,6 +32,8 @@ _Różne ciekawe luźne pomysły, które można byłoby zaimplementować dla pra
 	+ liczba przesunięć na znak,
 	+ kolejność faz (ustawianie/przesuwanie/dowolne),
 	+ liczba graczy,
++ Inne elementy interfejsu:
+	+ statystyki wygranych/przegranych,
 + Serwer i klient (WebSockets API).
 + ...
 
