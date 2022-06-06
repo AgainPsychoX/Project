@@ -1,7 +1,7 @@
 
 const gameUiRoot = document.querySelector('#game');
 
-let game = new Game();
+const game = new Game();
 
 const visualizer = new GameVisualizer(gameUiRoot).attach(game);
 
@@ -9,9 +9,9 @@ const strategies = {
 	none: null,
 	random: new RandomStrategy(),
 	minMax: new MinMaxStrategy(),
+	alphaBeta: new AlphaBetaStrategy(),
 };
 let strategy;
-let startingPlayer = 0;
 
 const resetButton = gameUiRoot.querySelector('.controls button[name=reset]');
 async function reset() {
@@ -23,9 +23,6 @@ async function reset() {
 	}
 	visualizer.detach();
 
-	// Reset the game state
-	game.reset();
-
 	// Algorithm for computer to use
 	{
 		strategy = strategies[gameUiRoot.querySelector('.controls select[name=computerAlgorithm]').value];
@@ -36,6 +33,7 @@ async function reset() {
 
 	// Starting player
 	{
+		let startingPlayer = game.settings.startingPlayer;
 		const value = gameUiRoot.querySelector('.controls select[name=startingPlayer]').value;
 		const num = parseInt(value);
 		if (isNaN(num)) {
@@ -68,8 +66,40 @@ async function reset() {
 		else {
 			startingPlayer = num;
 		}
+		game.settings.startingPlayer = startingPlayer;
 	}
-	game.settings.startingPlayer = startingPlayer;
+
+	// Reset the game state
+	game.reset();
+	const x = symbolsForPlayers[0].charCodeAt(0);
+	const o = symbolsForPlayers[1].charCodeAt(0);
+	{
+		game.state = [
+			x, o, 0,
+			x, 0, 0,
+			0, 0, o,
+		];
+		game.remainingPlaces[0] = 1;
+		game.remainingPlaces[1] = 1;
+	}
+	// {
+	// 	game.state = [
+	// 		x, o, 0,
+	// 		x, 0, o,
+	// 		0, x, o,
+	// 	];
+	// 	game.remainingPlaces[0] = 0;
+	// 	game.remainingPlaces[1] = 0;
+	// }
+	// {
+	// 	game.state = [
+	// 		o, x, o,
+	// 		x, o, x,
+	// 		0, 0, 0,
+	// 	];
+	// 	game.remainingPlaces[0] = 0;
+	// 	game.remainingPlaces[1] = 0;
+	// }
 
 	// Attach visualizer
 	visualizer.attach(game);
@@ -88,6 +118,7 @@ async function reset() {
 resetButton.addEventListener('click', reset);
 
 // gameUiRoot.querySelector('.controls select[name=computerAlgorithm]').value = 'random'; // prevent lag while in development
+gameUiRoot.querySelector('.controls select[name=startingPlayer]').value = '1';
 reset();
 
 

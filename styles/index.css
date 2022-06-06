@@ -98,6 +98,7 @@ footer address {
 	padding-right: 0.5em;
 	content: '►';
 	transform: scaleY(2) translateY(-0.033em);
+	line-height: 0.5em;
 }
 #game > .strategy .nodes details[open] > summary::before {
 	content: '▼';

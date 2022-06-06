@@ -13,7 +13,7 @@ async function nextFrame() {
 	return new Promise(resolve => requestAnimationFrame(resolve));
 }
 
-class MinMaxTreeGenerationFeedback extends EventTarget {
+class AlphaBetaTreeGenerationFeedback extends EventTarget {
 	constructor(interactivity = 0) {
 		super();
 		this.count = 0;
@@ -21,6 +21,7 @@ class MinMaxTreeGenerationFeedback extends EventTarget {
 		this.wins = 0;
 		this.loses = 0;
 		this.draws = 0;
+		this.cutoffs = 0;
 		this.interactivity = interactivity;
 	}
 
@@ -35,11 +36,12 @@ class MinMaxTreeGenerationFeedback extends EventTarget {
 	}
 
 	/**
-	 * @param {MinMaxNode} node 
+	 * @param {AlphaBetaNode} node 
+	 * @param {Game} state
 	 */
-	async onNodePrepared(node) {
+	async onNodePrepared(node, state) {
 		this.count++;
-		if (node.game.phase == 'over') {
+		if (state.phase == 'over') {
 			this.leafs++;
 			if (node.score > 0) this.wins++;
 			if (node.score < 0) this.loses++;
@@ -50,6 +52,10 @@ class MinMaxTreeGenerationFeedback extends EventTarget {
 			await nextFrame();
 		}
 	}
+
+	onNodeCutoff(node, state) {
+		this.cutoffs++;
+	}
 }
 
 /**
@@ -57,26 +63,26 @@ class MinMaxTreeGenerationFeedback extends EventTarget {
  * @param {Game} game Game to affect.
  */
 
-class MinMaxNode {
+class AlphaBetaNode {
 	/**
-	 * @param {number} player Player to win.
-	 * @param {Game} game 
-	 * @param {GameAction} action 
-	 * @param  {...any} args 
+	 * @param {number} playerToWin Player to win.
+	 * @param {number} [alpha=-Infinity]
+	 * @param {number} [beta=+Infinity]
+	 * @param {GameAction} [action] 
+	 * @param  {...any} [args]
 	 */
-	constructor(player, game, action, ...args) {
-		/** @type {number} */ this.player = player;
-		/** @type {Game} */ this.game = game;
+	constructor(playerToWin, alpha = -Infinity, beta = +Infinity, action, ...args) {
+		/** @type {number} */ this.playerToWin = playerToWin;
 		/** @type {GameAction} */ this.action = action
 		/** @type {any[]} */ this.args = args;
-		/** @type {MinMaxNode[]} */ this.children = [];
-		/** @type {number} */ this.score = -Infinity;
-
-		this.applyTo(this.game);
+		/** @type {AlphaBetaNode[]} */ this.children = [];
+		/** @type {number} */ this.alpha = alpha;
+		/** @type {number} */ this.beta = beta;
 	}
 
 	toString() {
-		return `${this.player} ${this.action} ${this.args.join(' ')}`;
+		return `${this.action}(${this.args.join(', ')}) alpha: ${this.alpha} beta: ${this.beta} score: ${this.score}`;
+		// return `${this.action}(${this.args.join(', ')})`;
 	}
 
 	/**
@@ -94,59 +100,138 @@ class MinMaxNode {
 		}
 	}
 
+	// get score() {
+	// 	return this.alpha + this.beta;
+	// 	// return this.alpha - this.beta;
+	// 	// // Score passing via alpha/beta variables
+	// 	// if (isNaN(this.beta))
+
+	// 	// if (this.currentPlayer == this.playerToWin)
+	// 	// 	return this.alpha;
+	// 	// else
+	// 	// 	return this.beta;
+	// }
+
 	/**
-	 * @param {MinMaxTreeGenerationFeedback} [feedback]
+	 * @param {Game} currentState
+	 * @param {AlphaBetaTreeGenerationFeedback} [feedback]
 	 */
-	async prepare(feedback) {
-		const aggregate = this.player == this.game.currentPlayer ? Math.max : Math.min;
-		switch (this.game.phase) {
-			case 'placing': 
-				for (const {x, y} of this.game.placePossibilitiesGenerator()) {
-					const child = new MinMaxNode(this.player, this.game.clone(), 'place', x, y);
-					await child.prepare(feedback);
-					this.children.push(child);
+	async *childrenGenerator(currentState, feedback) {
+		if (this.args.length == 2 && this.args[0] == 1 && this.args[1] == 2 && currentState.currentPlayer == 1) {
+			void(1);
+		};
+		switch (currentState.phase) {
+			case 'placing':
+				for (const {x, y} of currentState.placePossibilitiesGenerator()) {
+					const child = new AlphaBetaNode(this.playerToWin, this.alpha, this.beta, 'place', x, y);
+					const nextState = currentState.clone();
+					child.applyTo(nextState);
+					const score = await child.prepare(nextState, feedback);
+					yield { child, nextState, score };
 				}
-				this.score = aggregate.apply(null, this.children.map(c => c.score));
 				break;
-			case 'moving': 
-				for (const {sx, sy, tx, ty} of this.game.movePossibilitiesForSymbolGenerator(this.game.currentPlayerSymbol)) {
-					const child = new MinMaxNode(this.player, this.game.clone(), 'move', sx, sy, tx, ty);
-					await child.prepare(feedback);
-					this.children.push(child);
+			case 'moving':
+				for (const {sx, sy, tx, ty} of currentState.movePossibilitiesForSymbolGenerator(currentState.currentPlayerSymbol)) {
+					const child = new AlphaBetaNode(this.playerToWin, this.alpha, this.beta, 'move', sx, sy, tx, ty);
+					const nextState = currentState.clone();
+					child.applyTo(nextState);
+					const score = await child.prepare(nextState, feedback);
+					yield { child, nextState, score };
 				}
-				this.score = aggregate.apply(null, this.children.map(c => c.score));
-				break;
-			case 'over':
-				if (this.game.currentPlayer == this.player) {
-					this.score = 1;
-					break;
-				}
-				if (this.game.currentPlayer == -1) {
-					this.score = 0;
-					break;
-				}
-				this.score = -1;
 				break;
 		}
+	}
+
+	/**
+	 * @param {Game} currentState
+	 * @param {AlphaBetaTreeGenerationFeedback} [feedback]
+	 */
+	async prepare(currentState, feedback) {
+		if (this.args.length == 2 && this.args[0] == 1 && this.args[1] == 2 && currentState.currentPlayer == 1) {
+			void(1);
+		};
+		// console.groupCollapsed(`${this}\n${currentState.toString()}`);
+		let out = -1;
+		if (currentState.phase == 'over') {
+			if (currentState.currentPlayer == this.playerToWin) out = 1;
+			else if (currentState.currentPlayer == -1) out = 0;
+			else out = -1;
+			this.alpha = this.beta = out;
+			// console.log('over ' + out)
+		}
+		else {
+			if (currentState.currentPlayer == this.playerToWin) {
+				for await (const {child, nextState, score} of this.childrenGenerator(currentState, feedback)) {
+					this.children.push(child);
+					// if (!isFinite(child.score)) {
+					// 	void(1);
+					// };
+					// this.alpha = Math.max(this.alpha, nextState.currentPlayer == this.playerToWin ? child.alpha : child.beta);
+					// this.alpha = Math.max(this.alpha, child.alpha);
+					this.alpha = Math.max(this.alpha, score);
+					if (this.alpha >= this.beta) {
+						if (feedback) {
+							feedback.onNodeCutoff(this);
+						}
+						break;
+					}
+					// this.children.push(child);
+				}
+				out = this.alpha;
+			}
+			else {
+				for await (const {child, nextState, score} of this.childrenGenerator(currentState, feedback)) {
+					this.children.push(child);
+					// if (!isFinite(child.score)) {
+					// 	void(1);
+					// };
+					if (this.args.length == 2 && this.args[0] == 2 && this.args[1] == 0 && currentState.currentPlayer == 0) {
+						// console.log(currentState.toString());
+						void(1);
+					};
+					// this.beta = Math.min(this.beta, nextState.currentPlayer == this.playerToWin ? child.alpha : child.beta);
+					// this.beta = Math.min(this.beta, child.beta);
+					this.beta = Math.min(this.beta, score);
+					if (this.alpha >= this.beta) {
+						if (feedback) {
+							feedback.onNodeCutoff(this);
+						}
+						break;
+					}
+					// this.children.push(child);
+				}
+				out = this.beta;
+			}
+		}
+		// if (this.args[0] == 0 && this.args[1] == 0) {
+		// 	void(1);
+		// };
+		if (this.args[0] == 0 && this.args[1] == 0 && this.args[2] == 0 && this.args[3] == 2) {
+			void(1);
+		};
+		// TODO: purge unnecessary children?
 		if (feedback) {
-			await feedback.onNodePrepared(this);
+			// TODO: add cutoff feedback
+			await feedback.onNodePrepared(this, currentState);
 		}
-		this.game = null;
+		// console.groupEnd();
+		this.score = out;
+		return out;
 	}
 }
 
-class MinMaxStrategy extends GameStrategy {
+class AlphaBetaStrategy extends GameStrategy {
 	static _cachedRoots = {};
 
 	/**
 	 * @param {number} player Player to win.
 	 * @param {Game} game 
-	 * @param {MinMaxTreeGenerationFeedback} [feedback] 
+	 * @param {AlphaBetaTreeGenerationFeedback} [feedback] 
 	 */
 	static async prepareRoot(player, game, feedback) {
 		const hash = await sha1('XD' + game.currentPlayer + player + JSON.stringify(game.settings) + game.state);
 
-		const found = MinMaxStrategy._cachedRoots[hash];
+		const found = AlphaBetaStrategy._cachedRoots[hash];
 		if (feedback) {
 			if (found) {
 				feedback.cacheHit();
@@ -158,8 +243,9 @@ class MinMaxStrategy extends GameStrategy {
 		}
 		if (found) return found;
 
-		const fresh = new MinMaxNode(player, game.clone().start());
-		return MinMaxStrategy._cachedRoots[hash] = fresh.prepare(feedback).then(() => {
+		const fresh = new AlphaBetaNode(player);
+		const imagination = game.clone().start();
+		return AlphaBetaStrategy._cachedRoots[hash] = fresh.prepare(imagination, feedback).then(() => {
 			if (feedback) feedback.finish();
 			return fresh;
 		});
@@ -167,23 +253,15 @@ class MinMaxStrategy extends GameStrategy {
 
 	constructor() {
 		super();
-		/** @type {MinMaxNode[]|null} */
+		/** @type {AlphaBetaNode[]|null} */
 		this.possibilities = null;
-	}
-
-	debugPrintPossibilities() {
-		console.log(
-			this.possibilities
-				.sort((a, b) => a.score - b.score)
-				.map(p => `${p.action} ${p.args.join(' ')} -> score: ${p.score} [children: ${p.children.length}]`)
-				.join('\n')
-		);
 	}
 
 	getBestPossibility() {
 		const bestScore = Math.max(...this.possibilities.map(p => p.score));
 		const bestPossibilities = this.possibilities.filter(p => p.score == bestScore).map(p => p);
 		return bestPossibilities[Math.random() * bestPossibilities.length | 0];
+		// return this.possibilities[Math.random() * this.possibilities.length | 0];
 	}
 
 	/**
@@ -236,22 +314,22 @@ class MinMaxStrategy extends GameStrategy {
 	}
 
 	/**
-	 * @param {MinMaxNode[]} nodes 
+	 * @param {AlphaBetaNode[]} nodes 
 	 * @param {Game} currentState
 	 * @returns `HTMLDetailsElement`s to represent the nodes.
 	 */
 	 _generatePossibilitiesUI(nodes, currentState) {
 		return nodes
-			.sort((a, b) => a.score - b.score)
+			// .sort((a, b) => a.score - b.score)
 			.map(node => {
 				let text;
 				switch (node.action) {
 					case 'place':
-						text = `${currentState.currentPlayerSymbol} (${node.args.join(', ')}) | wynik: ${node.score}`;
+						text = `${currentState.currentPlayerSymbol} (${node.args.join(', ')}) | α: ${node.alpha} β: ${node.beta} | wynik: ${node.score}`;
 						break;
 					case 'move':
 						const [sx, sy, tx, ty] = node.args;
-						text = `${currentState.currentPlayerSymbol} (${sx}, ${sy}) na (${tx}, ${ty}) | wynik: ${node.score}`;
+						text = `${currentState.currentPlayerSymbol} (${sx}, ${sy}) na (${tx}, ${ty}) | α: ${node.alpha} β: ${node.beta} | wynik: ${node.score}`;
 						break;
 				}
 
@@ -302,14 +380,14 @@ class MinMaxStrategy extends GameStrategy {
 	}
 
 	async prepare() {
-		const feedback = new MinMaxTreeGenerationFeedback(1000);
+		const feedback = new AlphaBetaTreeGenerationFeedback(1000);
 		const startTime = +new Date();
 		if (this.visualizer) {
 			feedback.addEventListener('cacheMiss', async () => {
 				this.visualizer.lock();
-				this.visualizer.uiRoot.querySelector('.strategy').innerHTML = `<h4>Generowanie drzewa min-max...</h4><p>Zaczyna: ${this.game.settings.startingPlayer == 0 ? 'Człowiek' : 'Komputer'}</p><p></p>`;
+				this.visualizer.uiRoot.querySelector('.strategy').innerHTML = `<h4>Generowanie drzewa alpha-beta...</h4><p>Zaczyna: ${this.game.settings.startingPlayer == 0 ? 'Człowiek' : 'Komputer'}</p><p></p>`;
 				const p = this.visualizer.uiRoot.querySelector('.strategy p:nth-of-type(2)');
-				const update = () => p.innerHTML = `Węzłów: ${feedback.count}. Liści: ${feedback.leafs}. Czas: ${((+new Date() - startTime) / 1000).toFixed(1)}s`;
+				const update = () => p.innerHTML = `Węzłów: ${feedback.count}. Liści: ${feedback.leafs}. Odcięć: ${feedback.cutoffs}. Czas: ${((+new Date() - startTime) / 1000).toFixed(1)}s`;
 				feedback.addEventListener('report', update);
 				feedback.addEventListener('finish', () => {
 					update();
@@ -317,13 +395,13 @@ class MinMaxStrategy extends GameStrategy {
 				});
 			});
 		}
-		const root = await MinMaxStrategy.prepareRoot(this.player, this.game, feedback);
+		const root = await AlphaBetaStrategy.prepareRoot(this.player, this.game, feedback);
 		this.possibilities = root.children;
 		if (feedback.count > 0) {
 			await delay(1000);
 		}
 		if (this.visualizer) {
-			this.visualizer.uiRoot.querySelector('.strategy').innerHTML = `<h4>Najbliższe węzły min-max (wg. wyniku)</h4><div class="nodes"></div>`;
+			this.visualizer.uiRoot.querySelector('.strategy').innerHTML = `<h4>Najbliższe węzły alpha-beta (wg. wyniku)</h4><div class="nodes"></div>`;
 		}
 	}
 }

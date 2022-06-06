@@ -107,7 +107,7 @@ class Game extends EventTarget {
 	}
 
 	toString() {
-		let str = `players: ${this.playersCount}, places: ${this.settings.placesPerPlayer}, moves: ${this.settings.movesPerPlayer}\n`;
+		let str = `players: ${this.settings.playersCount}, places: ${this.settings.placesPerPlayer}, moves: ${this.settings.movesPerPlayer}\n`;
 		for (let y = 0; y < this.settings.height; y++) {
 			for (let x = 0; x < this.settings.width; x++) {
 				str += (this.getSymbol(x, y) ?? '.') + ' ';

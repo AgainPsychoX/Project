@@ -21,7 +21,7 @@ _Różne ciekawe luźne pomysły, które można byłoby zaimplementować dla pra
 	+ Przycinanie `alpha-beta`.
 	+ Transpozycje/haszowanie (Zobrist?) w celu unikania powtórzeń.
 	+ Dynamiczne transpozycje (dla symetrycznych/obróconych stanów).
-	+ Heurystyka zamiast rozwijania pełnego grafu.
+	+ Heurystyka i `beam-search` zamiast rozwijania pełnego grafu.
 	+ Ustawienia:
 		+ szansa na losowy ruch komputera (ułatwienie).
 + Kontrolki pozwalające modyfikować ustawienia:
@@ -36,5 +36,12 @@ _Różne ciekawe luźne pomysły, które można byłoby zaimplementować dla pra
 	+ statystyki wygranych/przegranych,
 + Serwer i klient (WebSockets API).
 + ...
+
+
+
+### TODO
+
++ fix symbol displayed in the details-summary lists for min-max
++ how long it took to generate
 
 
