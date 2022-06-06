@@ -73,15 +73,24 @@ async function reset() {
 	game.reset();
 	const x = symbolsForPlayers[0].charCodeAt(0);
 	const o = symbolsForPlayers[1].charCodeAt(0);
-	{
-		game.state = [
-			x, o, 0,
-			x, 0, 0,
-			0, 0, o,
-		];
-		game.remainingPlaces[0] = 1;
-		game.remainingPlaces[1] = 1;
-	}
+	// {
+	// 	game.state = [
+	// 		0, 0, 0,
+	// 		o, 0, 0,
+	// 		x, 0, 0,
+	// 	];
+	// 	game.remainingPlaces[0] = 2;
+	// 	game.remainingPlaces[1] = 2;
+	// }
+	// {
+	// 	game.state = [
+	// 		x, o, 0,
+	// 		x, 0, 0,
+	// 		0, 0, o,
+	// 	];
+	// 	game.remainingPlaces[0] = 1;
+	// 	game.remainingPlaces[1] = 1;
+	// }
 	// {
 	// 	game.state = [
 	// 		x, o, 0,

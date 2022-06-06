@@ -101,8 +101,8 @@ class AlphaBetaNode {
 	}
 
 	// get score() {
-	// 	return this.alpha + this.beta;
-	// 	// return this.alpha - this.beta;
+	// 	return this.alpha;
+	// 	// return this.alpha + this.beta;
 	// 	// // Score passing via alpha/beta variables
 	// 	// if (isNaN(this.beta))
 
@@ -147,73 +147,61 @@ class AlphaBetaNode {
 	 * @param {AlphaBetaTreeGenerationFeedback} [feedback]
 	 */
 	async prepare(currentState, feedback) {
-		if (this.args.length == 2 && this.args[0] == 1 && this.args[1] == 2 && currentState.currentPlayer == 1) {
-			void(1);
-		};
-		// console.groupCollapsed(`${this}\n${currentState.toString()}`);
+		// console.groupCollapsed(`${this}`);
+		// console.group(currentState.toString());
 		let out = -1;
 		if (currentState.phase == 'over') {
 			if (currentState.currentPlayer == this.playerToWin) out = 1;
 			else if (currentState.currentPlayer == -1) out = 0;
 			else out = -1;
 			this.alpha = this.beta = out;
-			// console.log('over ' + out)
+			// console.log('over: ' + out);
 		}
 		else {
 			if (currentState.currentPlayer == this.playerToWin) {
 				for await (const {child, nextState, score} of this.childrenGenerator(currentState, feedback)) {
 					this.children.push(child);
-					// if (!isFinite(child.score)) {
-					// 	void(1);
-					// };
-					// this.alpha = Math.max(this.alpha, nextState.currentPlayer == this.playerToWin ? child.alpha : child.beta);
-					// this.alpha = Math.max(this.alpha, child.alpha);
-					this.alpha = Math.max(this.alpha, score);
-					if (this.alpha >= this.beta) {
+					if (this.alpha < score) {
+						this.alpha = score;
+						// this.children.push(child);
+						// console.log(`new alpha: ${score}`);
+					}
+					if (score >= this.beta) {
+						// console.log(`score ${score} >= ${this.beta} beta ... cutoff`);
 						if (feedback) {
 							feedback.onNodeCutoff(this);
 						}
 						break;
 					}
-					// this.children.push(child);
 				}
 				out = this.alpha;
 			}
 			else {
 				for await (const {child, nextState, score} of this.childrenGenerator(currentState, feedback)) {
 					this.children.push(child);
-					// if (!isFinite(child.score)) {
-					// 	void(1);
-					// };
-					if (this.args.length == 2 && this.args[0] == 2 && this.args[1] == 0 && currentState.currentPlayer == 0) {
-						// console.log(currentState.toString());
-						void(1);
-					};
-					// this.beta = Math.min(this.beta, nextState.currentPlayer == this.playerToWin ? child.alpha : child.beta);
-					// this.beta = Math.min(this.beta, child.beta);
-					this.beta = Math.min(this.beta, score);
-					if (this.alpha >= this.beta) {
+					if (this.beta > score) {
+						this.beta = score;
+						// this.children.push(child);
+						// console.log(`new beta: ${score}`);
+					}
+					if (this.alpha >= score) {
+						// console.log(`alpha ${this.alpha} >= ${score} score ... cutoff`);
 						if (feedback) {
 							feedback.onNodeCutoff(this);
 						}
 						break;
 					}
-					// this.children.push(child);
 				}
 				out = this.beta;
 			}
 		}
-		// if (this.args[0] == 0 && this.args[1] == 0) {
-		// 	void(1);
-		// };
-		if (this.args[0] == 0 && this.args[1] == 0 && this.args[2] == 0 && this.args[3] == 2) {
-			void(1);
-		};
-		// TODO: purge unnecessary children?
 		if (feedback) {
-			// TODO: add cutoff feedback
 			await feedback.onNodePrepared(this, currentState);
 		}
+		if (!isFinite(out)) {
+			debugger;
+		}
+		// console.groupEnd();
 		// console.groupEnd();
 		this.score = out;
 		return out;
@@ -258,10 +246,14 @@ class AlphaBetaStrategy extends GameStrategy {
 	}
 
 	getBestPossibility() {
-		const bestScore = Math.max(...this.possibilities.map(p => p.score));
-		const bestPossibilities = this.possibilities.filter(p => p.score == bestScore).map(p => p);
-		return bestPossibilities[Math.random() * bestPossibilities.length | 0];
+		// const bestScore = Math.max(...this.possibilities.map(p => p.score));
+		// const bestPossibilities = this.possibilities.filter(p => p.score == bestScore).map(p => p);
+		// return bestPossibilities[Math.random() * bestPossibilities.length | 0];
+
 		// return this.possibilities[Math.random() * this.possibilities.length | 0];
+
+		const bestScore = Math.max(...this.possibilities.map(p => p.score));
+		return this.possibilities.find(p => p.score == bestScore);
 	}
 
 	/**

@@ -42,6 +42,5 @@ _Różne ciekawe luźne pomysły, które można byłoby zaimplementować dla pra
 ### TODO
 
 + fix symbol displayed in the details-summary lists for min-max
-+ how long it took to generate
 
 
