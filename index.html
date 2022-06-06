@@ -24,7 +24,8 @@
 				</ul>
 				<h3>Uwagi</h3>
 				<ul>
-					<li>Generowanie drzewa dla strategii min-max może jednorazowo nieco trwać (dla każdej z zaczynającej stron).</li>
+					<li>Generowanie drzewa dla strategii Min-Max może nieco trwać (dla każdej z zaczynającej stron), dlatego nie zaleca się wyłączania dla tej strategii buforowania.</li>
+					<li>Z kolei dla strategii Alpha-Beta wyłączenie buforowania pozwala na osiąganie różnych ścieżek - jako, że wybory są odgórnie wyliczone i zależy od kolejności badania stanów - losowanie odbywa się tu przy tworzeniu drzewa.</li>
 				</ul>
 			</section>
 			<section id="game">
@@ -46,14 +47,18 @@
 					</label>
 					<label>
 						<span>Strategia dla komputera:</span>
-						<select name="computerAlgorithm">
+						<select name="computerStrategy">
 							<option value="none">Brak (hot-seat)</option>
 							<option value="random">Losowa</option>
 							<!-- <option value="naive">Naiwna</option> -->
-							<option value="minMax">Min-max</option>
+							<option value="minMax">Min-Max</option>
 							<option value="alphaBeta" selected>Alpha-Beta</option>
 							<!-- <option value="simpleHeuristic">Prosta heurystyczna</option> -->
 						</select>
+					</label>
+					<label title="Niektóre strategie dla wygody użytkowania programu cache-ują niektóre dane, np. drzewo Min-max, którego generowanie może trwać dość długo.">
+						<input name="strategyCache" type="checkbox" checked />
+						<span>Buforowanie danych podręcznych strategii</span>
 					</label>
 					<!-- <label>
 						<span>Szansa na losowy ruch komputera (im większa tym łatwiej):</span>
@@ -65,7 +70,7 @@
 						<span>%</span>
 					</label> -->
 					<!-- <label>
-						<input name="showComputerChoices" type="checkbox">
+						<input name="showComputerChoices" type="checkbox" />
 						<span>Pokaż wybory komputera</span>
 					</label> -->
 					<!-- <label>

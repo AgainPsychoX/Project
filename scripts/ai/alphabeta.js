@@ -6,6 +6,21 @@ async function sha1(string) {
 	return resultBytes.map(x => x.toString(16).padStart(2, '0')).join("");
 }
 
+/**
+ * Shuffle array in place. {@link https://stackoverflow.com/a/2450976/4880243 Source (answer on StackOverflow)}.
+ * @param {any[]} array Array to shuffle.
+ * @returns Shuffled array, for chaining (as it modifies passed instance anyway).
+ */
+function shuffle(array) {
+	let currentIndex = array.length,  randomIndex;
+	while (currentIndex != 0) {
+		randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex--;
+		[array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+	}
+	return array;
+}
+
 async function delay(milliseconds) {
 	return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
@@ -81,8 +96,7 @@ class AlphaBetaNode {
 	}
 
 	toString() {
-		return `${this.action}(${this.args.join(', ')}) alpha: ${this.alpha} beta: ${this.beta} score: ${this.score}`;
-		// return `${this.action}(${this.args.join(', ')})`;
+		return `${this.action}(${this.args.join(', ')}) alpha: ${this.alpha} beta: ${this.beta}`;
 	}
 
 	/**
@@ -100,29 +114,15 @@ class AlphaBetaNode {
 		}
 	}
 
-	// get score() {
-	// 	return this.alpha;
-	// 	// return this.alpha + this.beta;
-	// 	// // Score passing via alpha/beta variables
-	// 	// if (isNaN(this.beta))
-
-	// 	// if (this.currentPlayer == this.playerToWin)
-	// 	// 	return this.alpha;
-	// 	// else
-	// 	// 	return this.beta;
-	// }
-
 	/**
 	 * @param {Game} currentState
 	 * @param {AlphaBetaTreeGenerationFeedback} [feedback]
 	 */
 	async *childrenGenerator(currentState, feedback) {
-		if (this.args.length == 2 && this.args[0] == 1 && this.args[1] == 2 && currentState.currentPlayer == 1) {
-			void(1);
-		};
 		switch (currentState.phase) {
-			case 'placing':
-				for (const {x, y} of currentState.placePossibilitiesGenerator()) {
+			case 'placing': {
+				const possibilities = shuffle([...currentState.placePossibilitiesGenerator()]);
+				for (const {x, y} of possibilities) {
 					const child = new AlphaBetaNode(this.playerToWin, this.alpha, this.beta, 'place', x, y);
 					const nextState = currentState.clone();
 					child.applyTo(nextState);
@@ -130,8 +130,10 @@ class AlphaBetaNode {
 					yield { child, nextState, score };
 				}
 				break;
-			case 'moving':
-				for (const {sx, sy, tx, ty} of currentState.movePossibilitiesForSymbolGenerator(currentState.currentPlayerSymbol)) {
+			}
+			case 'moving': {
+				const possibilities = shuffle([...currentState.movePossibilitiesForSymbolGenerator(currentState.currentPlayerSymbol)]);
+				for (const {sx, sy, tx, ty} of possibilities) {
 					const child = new AlphaBetaNode(this.playerToWin, this.alpha, this.beta, 'move', sx, sy, tx, ty);
 					const nextState = currentState.clone();
 					child.applyTo(nextState);
@@ -139,6 +141,7 @@ class AlphaBetaNode {
 					yield { child, nextState, score };
 				}
 				break;
+			}
 		}
 	}
 
@@ -147,15 +150,12 @@ class AlphaBetaNode {
 	 * @param {AlphaBetaTreeGenerationFeedback} [feedback]
 	 */
 	async prepare(currentState, feedback) {
-		// console.groupCollapsed(`${this}`);
-		// console.group(currentState.toString());
 		let out = -1;
 		if (currentState.phase == 'over') {
 			if (currentState.currentPlayer == this.playerToWin) out = 1;
 			else if (currentState.currentPlayer == -1) out = 0;
 			else out = -1;
 			this.alpha = this.beta = out;
-			// console.log('over: ' + out);
 		}
 		else {
 			if (currentState.currentPlayer == this.playerToWin) {
@@ -163,11 +163,8 @@ class AlphaBetaNode {
 					this.children.push(child);
 					if (this.alpha < score) {
 						this.alpha = score;
-						// this.children.push(child);
-						// console.log(`new alpha: ${score}`);
 					}
 					if (score >= this.beta) {
-						// console.log(`score ${score} >= ${this.beta} beta ... cutoff`);
 						if (feedback) {
 							feedback.onNodeCutoff(this);
 						}
@@ -181,11 +178,8 @@ class AlphaBetaNode {
 					this.children.push(child);
 					if (this.beta > score) {
 						this.beta = score;
-						// this.children.push(child);
-						// console.log(`new beta: ${score}`);
 					}
 					if (this.alpha >= score) {
-						// console.log(`alpha ${this.alpha} >= ${score} score ... cutoff`);
 						if (feedback) {
 							feedback.onNodeCutoff(this);
 						}
@@ -198,11 +192,6 @@ class AlphaBetaNode {
 		if (feedback) {
 			await feedback.onNodePrepared(this, currentState);
 		}
-		if (!isFinite(out)) {
-			debugger;
-		}
-		// console.groupEnd();
-		// console.groupEnd();
 		this.score = out;
 		return out;
 	}
@@ -239,6 +228,10 @@ class AlphaBetaStrategy extends GameStrategy {
 		});
 	}
 
+	static clearCache() {
+		AlphaBetaStrategy._cachedRoots = {};
+	}
+
 	constructor() {
 		super();
 		/** @type {AlphaBetaNode[]|null} */
@@ -246,14 +239,8 @@ class AlphaBetaStrategy extends GameStrategy {
 	}
 
 	getBestPossibility() {
-		// const bestScore = Math.max(...this.possibilities.map(p => p.score));
-		// const bestPossibilities = this.possibilities.filter(p => p.score == bestScore).map(p => p);
-		// return bestPossibilities[Math.random() * bestPossibilities.length | 0];
-
-		// return this.possibilities[Math.random() * this.possibilities.length | 0];
-
 		const bestScore = Math.max(...this.possibilities.map(p => p.score));
-		return this.possibilities.find(p => p.score == bestScore);
+		return this.possibilities.find(p => p.score == bestScore); // first!
 	}
 
 	/**
@@ -264,13 +251,17 @@ class AlphaBetaStrategy extends GameStrategy {
 	async attach(game, player = 1, visualizer) {
 		super.attach(game, player, visualizer);
 
+		this.game.addEventListener('next', this.firstNextListener = () => {
+			this.updateUI();
+			this.game.removeEventListener('next',  this.firstNextListener);
+		});
 		this.game.addEventListener('next', this.nextListener = async (event) => {
 			if (this.player == event.player) {
-				this.updateUI();
+				// this.updateUI(); // debugging - checking strategy choice making
 				const best = this.getBestPossibility();
 				best.applyTo(this.game);
 				this.possibilities = best.children;
-				// this.updateUI();
+				this.updateUI();
 			}
 		});
 		this.game.addEventListener('place', 
@@ -297,6 +288,7 @@ class AlphaBetaStrategy extends GameStrategy {
 
 	detach() {
 		if (!this.game) return this;
+		this.game.removeEventListener('next',  this.firstNextListener);
 		this.game.removeEventListener('next',  this.nextListener);
 		this.game.removeEventListener('place', this.placeListener);
 		this.game.removeEventListener('move',  this.moveListener);
@@ -310,7 +302,7 @@ class AlphaBetaStrategy extends GameStrategy {
 	 * @param {Game} currentState
 	 * @returns `HTMLDetailsElement`s to represent the nodes.
 	 */
-	 _generatePossibilitiesUI(nodes, currentState) {
+	_generatePossibilitiesUI(nodes, currentState) {
 		return nodes
 			// .sort((a, b) => a.score - b.score)
 			.map(node => {
@@ -393,7 +385,7 @@ class AlphaBetaStrategy extends GameStrategy {
 			await delay(1000);
 		}
 		if (this.visualizer) {
-			this.visualizer.uiRoot.querySelector('.strategy').innerHTML = `<h4>Najbliższe węzły alpha-beta (wg. wyniku)</h4><div class="nodes"></div>`;
+			this.visualizer.uiRoot.querySelector('.strategy').innerHTML = `<h4>Najbliższe węzły alpha-beta</h4><div class="nodes"></div>`;
 		}
 	}
 }

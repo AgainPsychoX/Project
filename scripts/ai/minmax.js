@@ -165,6 +165,10 @@ class MinMaxStrategy extends GameStrategy {
 		});
 	}
 
+	static clearCache() {
+		MinMaxStrategy._cachedRoots = {};
+	}
+
 	constructor() {
 		super();
 		/** @type {MinMaxNode[]|null} */
@@ -194,13 +198,17 @@ class MinMaxStrategy extends GameStrategy {
 	async attach(game, player = 1, visualizer) {
 		super.attach(game, player, visualizer);
 
+		this.game.addEventListener('next', this.firstNextListener = () => {
+			this.updateUI();
+			this.game.removeEventListener('next',  this.firstNextListener);
+		});
 		this.game.addEventListener('next', this.nextListener = async (event) => {
 			if (this.player == event.player) {
-				this.updateUI();
+				// this.updateUI(); // debugging - checking strategy choice making
 				const best = this.getBestPossibility();
 				best.applyTo(this.game);
 				this.possibilities = best.children;
-				// this.updateUI();
+				this.updateUI();
 			}
 		});
 		this.game.addEventListener('place', 
@@ -227,6 +235,7 @@ class MinMaxStrategy extends GameStrategy {
 
 	detach() {
 		if (!this.game) return this;
+		this.game.removeEventListener('next',  this.firstNextListener);
 		this.game.removeEventListener('next',  this.nextListener);
 		this.game.removeEventListener('place', this.placeListener);
 		this.game.removeEventListener('move',  this.moveListener);

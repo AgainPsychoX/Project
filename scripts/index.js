@@ -25,9 +25,14 @@ async function reset() {
 
 	// Algorithm for computer to use
 	{
-		strategy = strategies[gameUiRoot.querySelector('.controls select[name=computerAlgorithm]').value];
+		strategy = strategies[gameUiRoot.querySelector('.controls select[name=computerStrategy]').value];
 		if (strategy === undefined) {
 			throw new Error(`Strategy not found by name`);
+		}
+		const useCache = gameUiRoot.querySelector('.controls input[name=strategyCache]').checked;
+		if (!useCache) {
+			if (strategy.clearCache) strategy.clearCache();
+			else if (strategy.constructor.clearCache) strategy.constructor.clearCache();
 		}
 	}
 
@@ -71,17 +76,8 @@ async function reset() {
 
 	// Reset the game state
 	game.reset();
-	const x = symbolsForPlayers[0].charCodeAt(0);
-	const o = symbolsForPlayers[1].charCodeAt(0);
-	// {
-	// 	game.state = [
-	// 		0, 0, 0,
-	// 		o, 0, 0,
-	// 		x, 0, 0,
-	// 	];
-	// 	game.remainingPlaces[0] = 2;
-	// 	game.remainingPlaces[1] = 2;
-	// }
+	// const x = symbolsForPlayers[0].charCodeAt(0); // setting up initial position for debugging
+	// const o = symbolsForPlayers[1].charCodeAt(0);
 	// {
 	// 	game.state = [
 	// 		x, o, 0,
@@ -90,24 +86,6 @@ async function reset() {
 	// 	];
 	// 	game.remainingPlaces[0] = 1;
 	// 	game.remainingPlaces[1] = 1;
-	// }
-	// {
-	// 	game.state = [
-	// 		x, o, 0,
-	// 		x, 0, o,
-	// 		0, x, o,
-	// 	];
-	// 	game.remainingPlaces[0] = 0;
-	// 	game.remainingPlaces[1] = 0;
-	// }
-	// {
-	// 	game.state = [
-	// 		o, x, o,
-	// 		x, o, x,
-	// 		0, 0, 0,
-	// 	];
-	// 	game.remainingPlaces[0] = 0;
-	// 	game.remainingPlaces[1] = 0;
 	// }
 
 	// Attach visualizer
@@ -126,8 +104,8 @@ async function reset() {
 }
 resetButton.addEventListener('click', reset);
 
-// gameUiRoot.querySelector('.controls select[name=computerAlgorithm]').value = 'random'; // prevent lag while in development
-gameUiRoot.querySelector('.controls select[name=startingPlayer]').value = '1';
+// gameUiRoot.querySelector('.controls select[name=computerStrategy]').value = 'random'; // prevent lag while in development
+// gameUiRoot.querySelector('.controls select[name=startingPlayer]').value = '1';
 reset();
 
 
