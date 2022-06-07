@@ -18,7 +18,10 @@ Przygotował Patryk Ludwikowski.
 _Różne ciekawe luźne pomysły, które można byłoby zaimplementować dla praktyki, ale są generalnie poza założeniami projektu..._
 
 + Sztuczna inteligencja:
-	+ Przycinanie `alpha-beta`.
+	+ Naiwne strategia:
+		+ jeśli jakiś ruch wygrywający, wybierz.
+		+ jeśli jakiś ruch umożliwia przegranie w następnej turze, staraj się nie wybrać.
+		+ w ostateczności: losuj ruch.
 	+ Transpozycje/haszowanie (Zobrist?) w celu unikania powtórzeń.
 	+ Dynamiczne transpozycje (dla symetrycznych/obróconych stanów).
 	+ Heurystyka i `beam-search` zamiast rozwijania pełnego grafu.
@@ -36,11 +39,5 @@ _Różne ciekawe luźne pomysły, które można byłoby zaimplementować dla pra
 	+ statystyki wygranych/przegranych,
 + Serwer i klient (WebSockets API).
 + ...
-
-
-
-### TODO
-
-+ fix symbol displayed in the details-summary lists for min-max
 
 
