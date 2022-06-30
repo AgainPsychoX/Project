@@ -17,6 +17,7 @@ Przygotował Patryk Ludwikowski.
 
 _Różne ciekawe luźne pomysły, które można byłoby zaimplementować dla praktyki, ale są generalnie poza założeniami projektu..._
 
++ Uczynić grę grywalną na urządzeniach dotykowych.
 + Sztuczna inteligencja:
 	+ Naiwne strategia:
 		+ jeśli jakiś ruch wygrywający, wybierz.

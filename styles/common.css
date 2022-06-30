@@ -87,6 +87,28 @@ figcaption {
 	text-align: center;
 }
 
+label {
+	display: flex;
+	/* flex-wrap: wrap; */
+	align-items: baseline;
+	justify-content: center;
+}
+label span {
+	margin: 0 2px;
+	text-align: end;
+}
+label span:first-of-type {
+	margin-right: 4px;
+}
+label input + span {
+	margin-left: 4px;
+	text-align: left;
+}
+label input[type=radio],
+label input[type=checkbox] {
+	transform: translate(0px, 1px);
+}
+
 input.error {
 	border: 1px solid red;
 	box-shadow: inset 0px 0px 40px -20px rgba(255, 0, 0, 0.5);

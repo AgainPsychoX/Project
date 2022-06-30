@@ -3,11 +3,9 @@
  /* Specific stuff */
 /******************/
 
-#darkModeControl {
-	cursor: pointer;
-	user-select: none;
+footer {
+	position: relative;
 }
-
 footer address {
 	margin: auto;
 	padding: 8px;
@@ -17,6 +15,22 @@ footer address {
 	text-align: center;
 	white-space: nowrap;
 }
+
+#darkModeControl {
+	float: right; 
+
+	font-size: 3em; 
+	padding: 8px;
+
+	cursor: pointer;
+	user-select: none;
+}
+@media (max-width: 600px) {
+	#darkModeControl {
+		font-size: 2em; 
+	}
+}
+
 
 
 
@@ -64,11 +78,9 @@ footer address {
 	grid-area: c;
 	flex-direction: column;
 }
-#game > .controls > label > span:first-of-type {
+#game > .controls > label > span {
 	display: inline-block;
-	min-width: 200px;
-	text-align: end;
-	padding-right: 4px;
+	min-width: 180px;
 }
 #game > figure {
 	grid-area: a;
