@@ -8,7 +8,7 @@
 			"type": "pwa-chrome",
 			"request": "launch",
 			"name": "Launch Chrome",
-			"url": "file:///C:/Users/PsychoX/Desktop/Sroda/Sztuczna%20inteligencja/Project/index.html",
+			"url": "file:///D:/Projects/%23school/modified-tic-tac-toe/index.html",
 			"webRoot": "${workspaceFolder}"
 		}
 	]

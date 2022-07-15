@@ -11,7 +11,9 @@ const strategies = {
 	minMax: new MinMaxStrategy(),
 	alphaBeta: new AlphaBetaStrategy(),
 };
-let strategy;
+
+/** @type {GameStrategy|null} */
+let strategy = null;
 
 const resetButton = gameUiRoot.querySelector('.controls button[name=reset]');
 async function reset() {

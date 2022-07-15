@@ -18,6 +18,8 @@ Przygotował Patryk Ludwikowski.
 _Różne ciekawe luźne pomysły, które można byłoby zaimplementować dla praktyki, ale są generalnie poza założeniami projektu..._
 
 + Uczynić grę grywalną na urządzeniach dotykowych.
++ Uczynić grę grywalną za pomocą klawiatury (poprawna kolejność TAB + skróty klawiszowe?)
++ Zapamiętywać ustawienia (i drzewo?) po F5 (LocalStorage)
 + Sztuczna inteligencja:
 	+ Naiwne strategia:
 		+ jeśli jakiś ruch wygrywający, wybierz.
@@ -28,6 +30,7 @@ _Różne ciekawe luźne pomysły, które można byłoby zaimplementować dla pra
 	+ Heurystyka i `beam-search` zamiast rozwijania pełnego grafu.
 	+ Ustawienia:
 		+ szansa na losowy ruch komputera (ułatwienie).
++ Opcja do pokazywania drzew Min-Max/Alpha-Beta przed i po ruchu komputera (obecnie tylko po).
 + Kontrolki pozwalające modyfikować ustawienia:
 	+ wymiary planszy,
 	+ liczba ustawień znaków, 
