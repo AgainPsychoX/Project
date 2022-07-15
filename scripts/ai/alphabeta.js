@@ -240,7 +240,7 @@ class AlphaBetaStrategy extends GameStrategy {
 
 	getBestPossibility() {
 		const bestScore = Math.max(...this.possibilities.map(p => p.score));
-		return this.possibilities.find(p => p.score == bestScore); // first!
+		return this.possibilities.find(p => p.score == bestScore); // first, as it's expected to be resolved.
 	}
 
 	/**
@@ -257,32 +257,12 @@ class AlphaBetaStrategy extends GameStrategy {
 		});
 		this.game.addEventListener('next', this.nextListener = async (event) => {
 			if (this.player == event.player) {
-				// this.updateUI(); // debugging - checking strategy choice making
+				await this.prepare();
+				this.updateUI();
 				const best = this.getBestPossibility();
 				best.applyTo(this.game);
-				this.possibilities = best.children;
-				this.updateUI();
 			}
 		});
-		this.game.addEventListener('place', 
-			this.placeListener = /** @param {PlacedSymbolEvent} event */ event => {
-				if (this.player == event.player) return;
-				if (!(this.possibilities.length > 0)) return;
-				const observed = this.possibilities.find(p => p.action == 'place' && p.args[0] == event.x && p.args[1] == event.y)
-				this.possibilities = observed.children;
-			}
-		);
-		this.game.addEventListener('move', 
-			this.moveListener = /** @param {MovedSymbolEvent} event */ event => {
-				if (this.player == event.player) return;
-				if (!(this.possibilities.length > 0)) return;
-				const observed = this.possibilities.find(p => p.action == 'move' 
-					&& p.args[0] == event.sx && p.args[1] == event.sy
-					&& p.args[2] == event.tx && p.args[3] == event.ty
-				);
-				this.possibilities = observed.children;
-			}
-		);
 		return this;
 	}
 
@@ -290,8 +270,6 @@ class AlphaBetaStrategy extends GameStrategy {
 		if (!this.game) return this;
 		this.game.removeEventListener('next',  this.firstNextListener);
 		this.game.removeEventListener('next',  this.nextListener);
-		this.game.removeEventListener('place', this.placeListener);
-		this.game.removeEventListener('move',  this.moveListener);
 		this.possibilities = null;
 		super.detach();
 		return this;
@@ -363,6 +341,9 @@ class AlphaBetaStrategy extends GameStrategy {
 		}
 	}
 
+	/**
+	 * Prepares Alpha-Beta strategy tree for currently attached game.
+	 */
 	async prepare() {
 		const feedback = new AlphaBetaTreeGenerationFeedback(1000);
 		const startTime = +new Date();
@@ -381,10 +362,10 @@ class AlphaBetaStrategy extends GameStrategy {
 		}
 		const root = await AlphaBetaStrategy.prepareRoot(this.player, this.game, feedback);
 		this.possibilities = root.children;
-		if (feedback.count > 0) {
-			await delay(1000);
-		}
 		if (this.visualizer) {
+			if (feedback.count > 0) {
+				await delay(500);
+			}
 			this.visualizer.uiRoot.querySelector('.strategy').innerHTML = `<h4>Najbliższe węzły alpha-beta</h4><div class="nodes"></div>`;
 		}
 	}

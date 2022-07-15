@@ -131,7 +131,7 @@ class Game extends EventTarget {
 
 	reset() {
 		this.turn = -1;
-		this.currentPlayer = 0;
+		this.currentPlayer = this.settings.startingPlayer;
 		this.state = Array(this.settings.width * this.settings.height).fill(0);
 		/** @type {GamePhase} */
 		this.phase = 'placing';
@@ -527,7 +527,6 @@ class Game extends EventTarget {
 		if (this.isOver()) {
 			throw new Error(`Game over, use reset first`);
 		}
-		this.currentPlayer = this.settings.startingPlayer;
 		this.dispatchEvent(new PlayerEvent('start', this.currentPlayer));
 		this.dispatchEvent(new PhaseEvent(this.phase));
 		this.currentPlayer -= 1; // increments in `next`
