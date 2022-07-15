@@ -104,8 +104,33 @@ async function reset() {
 }
 resetButton.addEventListener('click', reset);
 
-// gameUiRoot.querySelector('.controls select[name=computerStrategy]').value = 'random'; // prevent lag while in development
-// gameUiRoot.querySelector('.controls select[name=startingPlayer]').value = '1';
+const parseBoolean = (value, defaultValue = false) => {
+	if (typeof value === 'undefined' || value === null) {
+		return defaultValue;
+	}
+	if (typeof value === 'boolean') {
+		return value;
+	}
+	switch (value.toLowerCase().trim()) {
+		case "true": case "yes": case "on": case "1": return true;
+		case "false": case "no": case "off": case "0": return false;
+		default: return defaultValue;
+	}
+}
+
+// Load settings from query params if set
+{
+	const searchParams = new URL(location.href).searchParams;
+	for (const select of gameUiRoot.querySelectorAll('.controls select')) {
+		const value = searchParams.get(select.name);
+		if (value !== null) select.value = value;
+	}
+	for (const checkbox of gameUiRoot.querySelectorAll('.controls input[type=checkbox]')) {
+		const value = searchParams.get(checkbox.name);
+		if (value !== null) checkbox.checked = parseBoolean(value);
+	}
+}
+
 reset();
 
 
